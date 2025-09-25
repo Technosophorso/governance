@@ -14,7 +14,15 @@ Proposal: Cardano Multisig Platform by Mesh, Clarity DAO & FluidTokens
 
 
 Hey there Milestone Reviewers, voters and really anyone who follows the progress of this proposal.
-Here we are, reporting on the successful completion of the third proposal milestone. Took once again a bit longer than expected but we finally got everything done. So, here we are.
+Here we are, reporting on the updated completion of the third proposal milestone. Took once again a bit longer than expected but we finally got everything done. So, here we are.
+
+### Changes
+
+- we fixed the bugs pointed out by the Milestone Reviewers
+- we did a updated video to drive watchers through the process
+ 
+So, there we go :)
+
 
 The acceptance criteria for this milestone has been stated as:
 
@@ -41,8 +49,8 @@ Additionally documentation for the publicly available API can be found at:
 A respective github repo at FluidTokens outlining the use of the deployed features can be found at:
 - https://github.com/FluidTokens/ft-mesh-aquarium-demo 
 
-In addition, here a video from FluidTokens giving a run-through of their successfully deployed features
-https://drive.google.com/file/d/130abU4q6YC9-ApO6dwnnXfbvki9HcXow/view?usp=sharing 
+In addition, here a updated video giving a run-through of their successfully deployed features
+https://youtu.be/hPjfhb8eXYk
 
 The project is since inception fully open source, accessible and free to use for anyone
 Repository: https://github.com/MeshJS/multisig 
@@ -68,5 +76,7 @@ We are actively working on the deliverables of the next milestone. Special thank
 See you soon
 
 Mesh & Collaborators 
+
+
 
 
