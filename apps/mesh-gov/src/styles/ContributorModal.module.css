@@ -733,12 +733,7 @@
 }
 
 .donutChart:hover {
-    filter: brightness(0.95) saturate(0.9);
-}
-
-/* Add data attribute selector for active slice */
-.donutChart[data-active-slice] {
-    filter: brightness(0.95) saturate(0.9);
+    filter: none;
 }
 
 .donutLegend {
