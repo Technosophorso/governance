@@ -10,23 +10,19 @@ import { FaArrowLeft, FaCalendarAlt } from 'react-icons/fa';
 import MeshSDKCarousel from '../../components/MeshSDKCarousel';
 import MeshSDKArchitectureChart from '../../components/MeshSDKArchitectureChart';
 import { useData } from '../../contexts/DataContext';
-import PackageDownloadsDonut from '../../components/PackageDownloadsDonut';
 import MeshSdkContributorsChart from '../../components/MeshSdkContributorsChart';
 import MeshRepositoriesEvolutionChart from '../../components/MeshRepositoriesEvolutionChart';
 import MeshSDKProposalCard from '../../components/MeshSDKProposalCard';
 import { Contributor, ContributorRepository, CatalystProject } from '../../types';
-import { 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   TooltipProps,
-  ComposedChart,
-  Line,
-  Area
 } from 'recharts';
 
 // Time window presets
@@ -191,184 +187,10 @@ const CustomBarChart: FC<CustomBarChartProps> = ({ data, chartId }) => {
   );
 };
 
-// Enhanced Repository tooltip for multi-line chart
-const CustomRepositoryTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload || payload.length === 0) return null;
+// Entry-point packages only — excludes transitive deps to avoid double-counting
+const MESH_SDK_ENTRY_PACKAGES = ['@meshsdk/core', '@meshsdk/react', '@meshsdk/contract'];
 
-  // Filter to only show Line components (not Area components) to avoid duplicates
-  const filteredPayload = payload.filter(
-    (entry: any) => entry.name && entry.name !== entry.dataKey
-  );
-
-  return (
-    <div
-      style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        border: '1px solid rgba(0, 0, 0, 0.2)',
-        borderRadius: '8px',
-        padding: '12px 16px',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)',
-        maxWidth: '280px',
-      }}
-    >
-      <div
-        style={{
-          fontSize: '11px',
-          color: 'rgba(0, 0, 0, 0.8)',
-          marginBottom: '6px',
-          fontWeight: '600',
-          borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
-          paddingBottom: '3px',
-        }}
-      >
-        {label}
-      </div>
-      {filteredPayload.map((entry: any, index: number) => (
-        <div
-          key={index}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: index === filteredPayload.length - 1 ? '0' : '4px',
-            fontSize: '10px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '16px' }}>
-            <div
-              style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '1px',
-                backgroundColor: '#000000',
-                boxShadow: '0 0 3px rgba(0, 0, 0, 0.3)',
-              }}
-            />
-            <span style={{ color: 'rgba(0, 0, 0, 0.9)', fontWeight: '500' }}>
-              {entry.name}
-            </span>
-          </div>
-          <span
-            style={{
-              color: 'rgba(0, 0, 0, 0.9)',
-              fontWeight: '600',
-              fontFamily: "'JetBrains Mono', monospace",
-            }}
-          >
-            {formatNumber(entry.value)}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// Custom multi-line chart component
-interface CustomMultiLineChartProps {
-  data: Array<{
-    month: string;
-    [key: string]: any;
-  }>;
-  chartId: string;
-  lines: Array<{
-    dataKey: string;
-    name: string;
-    stroke: string;
-  }>;
-  highlightedKey?: string | null;
-}
-
-const CustomMultiLineChart: FC<CustomMultiLineChartProps> = ({
-  data,
-  chartId,
-  lines,
-  highlightedKey = null,
-}) => (
-  <ResponsiveContainer width="100%" height="100%">
-    <ComposedChart data={data} margin={{ top: 15, right: 20, left: 15, bottom: 15 }}>
-      <defs>
-        {lines.map((line, index) => {
-          return (
-            <linearGradient
-              key={`area-${index}`}
-              id={`areaGradient-${chartId}-${line.dataKey}`}
-              x1="0"
-              y1="0"
-              x2="0"
-              y2="1"
-            >
-              <stop offset="0%" stopColor="#000000" stopOpacity="0.1" />
-              <stop offset="50%" stopColor="#000000" stopOpacity="0.05" />
-              <stop offset="100%" stopColor="#000000" stopOpacity="0" />
-            </linearGradient>
-          );
-        })}
-      </defs>
-      <CartesianGrid
-        strokeDasharray="2 2"
-        stroke="rgba(0, 0, 0, 0.1)"
-        horizontal={true}
-        vertical={false}
-      />
-      <XAxis
-        dataKey="month"
-        stroke="rgba(0, 0, 0, 0.6)"
-        fontSize={9}
-        fontWeight={500}
-        angle={-60}
-        textAnchor="end"
-        height={70}
-        tick={{ fill: 'rgba(0, 0, 0, 0.6)' }}
-        tickMargin={8}
-        interval={0}
-      />
-      <YAxis
-        stroke="rgba(0, 0, 0, 0.6)"
-        fontSize={10}
-        fontWeight={500}
-        tick={{ fill: 'rgba(0, 0, 0, 0.6)' }}
-      />
-      <Tooltip content={<CustomRepositoryTooltip />} cursor={false} />
-      {lines.map((line, index) => {
-        const isHighlighted = highlightedKey && line.dataKey === highlightedKey;
-        return (
-          <Area
-            key={`area-${index}`}
-            type="monotone"
-            dataKey={line.dataKey}
-            fill={isHighlighted ? "#ffffff" : `url(#areaGradient-${chartId}-${line.dataKey})`}
-            stroke="none"
-            fillOpacity={isHighlighted ? 1 : (highlightedKey ? 0.06 : undefined)}
-          />
-        );
-      })}
-      {lines.map((line, index) => (
-          <Line
-            key={`line-${index}`}
-            type="monotone"
-            name={line.name}
-            dataKey={line.dataKey}
-            stroke="#000000"
-            strokeWidth={highlightedKey ? (line.dataKey === highlightedKey ? 2.5 : 0.8) : 1.5}
-            strokeOpacity={highlightedKey ? (line.dataKey === highlightedKey ? 1 : 0.3) : 1}
-            dot={false}
-            activeDot={{
-              r: 4,
-              fill: '#000000',
-              stroke: 'rgba(255, 255, 255, 0.8)',
-              strokeWidth: 1.5,
-              filter: 'drop-shadow(0 0 4px rgba(0, 0, 0, 0.3))',
-            }}
-            connectNulls={false}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-      ))}
-    </ComposedChart>
-  </ResponsiveContainer>
-);
-
-// Calculate download metrics across all packages (excluding web3-sdk)
+// Calculate download metrics using entry-point packages only (excluding web3-sdk)
 const calculateAggregatedMetrics = (meshPackagesData: any) => {
   if (!meshPackagesData?.packages) {
     return {
@@ -384,9 +206,9 @@ const calculateAggregatedMetrics = (meshPackagesData: any) => {
   let last12Months = 0;
   let allTime = 0;
 
-  // Filter out web3-sdk package
+  // Only count entry-point packages to avoid double-counting transitive dependencies
   meshPackagesData.packages
-    .filter((pkg: any) => pkg.name !== '@meshsdk/web3-sdk')
+    .filter((pkg: any) => MESH_SDK_ENTRY_PACKAGES.includes(pkg.name))
     .forEach((pkg: any) => {
       // Use API fields for recent periods (more reliable)
       lastWeek += pkg.last_week_downloads || 0;
@@ -416,119 +238,39 @@ const calculateAggregatedMetrics = (meshPackagesData: any) => {
   };
 };
 
-// Function to get monthly download data
+// Function to get monthly download data — full timeline of completed months
 const getMonthlyDownloadData = (meshPackagesData: any) => {
   if (!meshPackagesData?.packages) return [];
 
   const currentYear = new Date().getFullYear();
-  const currentMonthIndex1Based = new Date().getMonth() + 1;
-  
-  const monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-  const monthlyTotals: { [key: number]: number } = {};
+  const currentMonth = new Date().getMonth() + 1;
+  const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthlyTotals: Record<string, number> = {};
 
-  // Aggregate downloads from all packages for current year (excluding Web3 SDK)
-  // Include all months up to and including the previous month (completed months)
+  // Aggregate downloads from entry-point packages across all completed months
   meshPackagesData.packages
-    .filter((pkg: any) => pkg.name !== '@meshsdk/web3-sdk') // Exclude Web3 SDK
+    .filter((pkg: any) => MESH_SDK_ENTRY_PACKAGES.includes(pkg.name))
     .forEach((pkg: any) => {
       if (pkg.monthly_downloads) {
         pkg.monthly_downloads
-          .filter(
-            (monthObj: any) =>
-              monthObj.year === currentYear && monthObj.month < currentMonthIndex1Based
-          )
-          .forEach((monthObj: any) => {
-            const monthNum = monthObj.month;
-            if (!monthlyTotals[monthNum]) {
-              monthlyTotals[monthNum] = 0;
-            }
-            monthlyTotals[monthNum] += monthObj.downloads || 0;
+          .filter((m: any) => m.year < currentYear || (m.year === currentYear && m.month < currentMonth))
+          .forEach((m: any) => {
+            const key = `${m.year}-${String(m.month).padStart(2, '0')}`;
+            monthlyTotals[key] = (monthlyTotals[key] || 0) + (m.downloads || 0);
           });
       }
     });
 
-  // Convert to array format sorted by month
+  // Convert to sorted array
   return Object.entries(monthlyTotals)
-    .map(([month, downloads]) => ({
-      name: `${monthNames[parseInt(month) - 1]} ${currentYear}`,
-      downloads: downloads,
-    }))
-    .sort((a, b) => {
-      const aMonth = monthNames.indexOf(a.name.split(' ')[0]) + 1;
-      const bMonth = monthNames.indexOf(b.name.split(' ')[0]) + 1;
-      return aMonth - bMonth;
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, downloads]) => {
+      const [year, month] = key.split('-');
+      return {
+        name: `${shortMonths[parseInt(month) - 1]} ${year}`,
+        downloads,
+      };
     });
-};
-
-// Define historical lines for the multi-line chart
-const historicalLines = [
-  { name: 'Core', dataKey: 'core', stroke: '#000000' },
-  { name: 'Core CST', dataKey: 'core_cst', stroke: '#000000' },
-  { name: 'Common', dataKey: 'common', stroke: '#000000' },
-  { name: 'Transaction', dataKey: 'transaction', stroke: '#000000' },
-  { name: 'Wallet', dataKey: 'wallet', stroke: '#000000' },
-  { name: 'React', dataKey: 'react', stroke: '#000000' },
-  { name: 'Provider', dataKey: 'provider', stroke: '#000000' },
-  { name: 'Web3 SDK', dataKey: 'web3_sdk', stroke: '#000000' },
-  { name: 'Core CSL', dataKey: 'core_csl', stroke: '#000000' },
-  { name: 'Contract', dataKey: 'contract', stroke: '#000000' },
-];
-
-// Get historical package downloads data (excluding web3-sdk)
-const getHistoricalPackageDownloadsData = (meshPackagesData: any) => {
-  if (!meshPackagesData?.packages) return [];
-
-  const currentYear = new Date().getFullYear();
-  const currentMonthIndex1Based = new Date().getMonth() + 1;
-  
-  const allMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  // Only include completed months (exclude current month since it's still in progress)
-  const maxMonth = currentMonthIndex1Based - 1; // Previous month is the latest completed month
-  const months = allMonths.slice(0, Math.max(1, maxMonth)); // At least include January
-  const combined: { [key: string]: any } = {};
-
-  // Initialize months
-  months.forEach(month => {
-    combined[month] = { month };
-  });
-
-  // Process each package's monthly downloads for current year (excluding web3-sdk)
-  meshPackagesData.packages
-    .filter((pkg: any) => pkg.name !== '@meshsdk/web3-sdk')
-    .forEach((pkg: any) => {
-      const monthlyData = pkg.monthly_downloads
-        ?.filter((item: any) => item.year === currentYear && item.month >= 1 && item.month <= maxMonth)
-        ?.sort((a: any, b: any) => a.month - b.month);
-
-      if (monthlyData && monthlyData.length > 0) {
-        monthlyData.forEach((item: any) => {
-          const monthName = months[item.month - 1];
-          const packageKey = pkg.name.replace('@meshsdk/', '').replace('-', '_');
-          if (combined[monthName]) {
-            combined[monthName][packageKey] = item.downloads || 0;
-          }
-        });
-      }
-    });
-
-  // Convert to array and filter out months with no data
-  return Object.values(combined).filter((monthData: any) => {
-    const hasData = Object.keys(monthData).length > 1; // More than just 'month' property
-    return hasData;
-  });
 };
 
 // Filter contributors to only include those who contributed to Mesh SDK repositories
@@ -660,8 +402,6 @@ export default function MeshSDKProject() {
   // Always initialize with the core node highlighted
   const [highlightedNodeId, setHighlightedNodeId] = useState<string>('core');
   const [isUpdatingFromChart, setIsUpdatingFromChart] = useState(false);
-  const [highlightedPackageKey, setHighlightedPackageKey] = useState<string | null>(null);
-  
   // Time window state
   const [timeWindow, setTimeWindow] = useState<TimeWindow>({
     startDate: null,
@@ -679,7 +419,7 @@ export default function MeshSDKProject() {
     if (!catalystData?.catalystData?.projects) return [];
     
     // Project IDs for Mesh SDK related proposals in the desired order
-    const orderedMeshSdkProjectIds = ['1000107', '1100271', '1200147', '1200220', '1300130'];
+    const orderedMeshSdkProjectIds = ['1000107', '1100271', '1200147', '1200220', '1300130', '1400080'];
     
     // Filter projects that match our IDs
     const filteredProjects = catalystData.catalystData.projects.filter((project: CatalystProject) => 
@@ -791,11 +531,6 @@ export default function MeshSDKProject() {
     }, 100);
   };
   
-  // Handler for toggling package highlight in the historical chart
-  const handleToggleBadge = (key: string | null) => {
-    setHighlightedPackageKey(prev => (prev === key ? null : key));
-  };
-  
   return (
     <div className={projectStyles.container}>
       <Link href="/projects" className={projectStyles.backLink}>
@@ -809,7 +544,7 @@ export default function MeshSDKProject() {
       />
       
       <div className={projectStyles.content}>
-        <div className={carouselStyles.sectionWithBar}>
+        <div style={{ marginBottom: '80px' }}>
           <div className={carouselStyles.carouselHeader}>
             <h2 className={carouselStyles.carouselTitle}>Mesh SDK Packages</h2>
             <p className={carouselStyles.carouselSubtitle}>
@@ -840,7 +575,7 @@ export default function MeshSDKProject() {
         </div>
         
         {/* Mesh SDK Usage section with white vertical bar */}
-        <div className={carouselStyles.sectionWithWhiteBar}>
+        <div style={{ marginTop: '40px', marginBottom: '80px' }}>
           <div className={carouselStyles.carouselHeader}>
             <h2 className={carouselStyles.carouselTitle}>Mesh SDK Usage</h2>
             <p className={carouselStyles.carouselSubtitle}>
@@ -875,78 +610,22 @@ export default function MeshSDKProject() {
             {meshData?.meshPackagesData && (
               <div className={meshStatsStyles.chartsGrid}>
                 <div className={meshStatsStyles.chartSection}>
-                  <h3 className={meshStatsStyles.chartTitle}>Package Downloads (All Time)</h3>
+                  <h3 className={meshStatsStyles.chartTitle}>Monthly Downloads</h3>
                   <div className={meshStatsStyles.chart} style={{ height: '520px' }}>
-                    <PackageDownloadsDonut 
-                      packageData={meshData.meshPackagesData.packages
-                        .filter(pkg => pkg.name !== '@meshsdk/web3-sdk') // Exclude Web3 SDK
-                        .map(pkg => ({
-                          name: pkg.name
-                            .replace('@meshsdk/', '')
-                            .replace('-', ' ')
-                            .replace(/\b\w/g, c => c.toUpperCase()),
-                          downloads: pkg.last_12_months_downloads,
-                          packageName: pkg.name,
-                        }))} 
+                    <CustomBarChart
+                      data={getMonthlyDownloadData(meshData.meshPackagesData)}
+                      chartId="monthly"
                     />
-                  </div>
-                </div>
-                
-                <div className={meshStatsStyles.chartSection}>
-                  <h3 className={meshStatsStyles.chartTitle}>Monthly Downloads (2025)</h3>
-                  <div className={meshStatsStyles.chart} style={{ height: '520px' }}>
-                    {meshData?.meshPackagesData && (
-                      <CustomBarChart 
-                        data={getMonthlyDownloadData(meshData.meshPackagesData)}
-                        chartId="monthly"
-                      />
-                    )}
                   </div>
                 </div>
               </div>
             )}
             
-            {/* Historical Package Downloads Chart */}
-            {meshData?.meshPackagesData && getHistoricalPackageDownloadsData(meshData.meshPackagesData).length > 0 && (
-              <div className={meshStatsStyles.chartSection}>
-                <h3 className={meshStatsStyles.chartTitle}>Package Downloads per month 2025</h3>
-                <div className={meshStatsStyles.badges}>
-                  <button
-                    type="button"
-                    className={`${meshStatsStyles.badge} ${!highlightedPackageKey ? meshStatsStyles.badgeSelected : ''}`}
-                    onClick={() => handleToggleBadge(null)}
-                  >
-                    All
-                  </button>
-                  {historicalLines
-                    .filter(line => line.dataKey !== 'web3_sdk') // Exclude Web3 SDK
-                    .map(line => (
-                      <button
-                        key={line.dataKey}
-                        type="button"
-                        className={`${meshStatsStyles.badge} ${highlightedPackageKey === line.dataKey ? meshStatsStyles.badgeSelected : ''}`}
-                        onClick={() => handleToggleBadge(line.dataKey)}
-                        title={line.name}
-                      >
-                        {line.name}
-                      </button>
-                    ))}
-                </div>
-                <div className={meshStatsStyles.chart} style={{ height: '500px' }}>
-                  <CustomMultiLineChart
-                    data={getHistoricalPackageDownloadsData(meshData.meshPackagesData)}
-                    chartId="historical-downloads"
-                    lines={historicalLines.filter(line => line.dataKey !== 'web3_sdk')} // Exclude Web3 SDK
-                    highlightedKey={highlightedPackageKey}
-                  />
-                </div>
-              </div>
-            )}
           </div>
         </div>
         
         {/* Contributors section with teal vertical bar */}
-          <div className={carouselStyles.sectionWithTealBar}>
+          <div style={{ marginTop: '40px' }}>
             <div className={carouselStyles.carouselHeader}>
               <h2 className={carouselStyles.carouselTitle}>Contributors</h2>
               <p className={carouselStyles.carouselSubtitle}>
@@ -1049,7 +728,7 @@ export default function MeshSDKProject() {
         </div>
         
         {/* Funding section with teal vertical bar */}
-        <div className={carouselStyles.sectionWithTealBar}>
+        <div style={{ marginTop: '40px' }}>
           <div className={carouselStyles.carouselHeader}>
             <h2 className={carouselStyles.carouselTitle}>Funding</h2>
             <p className={carouselStyles.carouselSubtitle}>

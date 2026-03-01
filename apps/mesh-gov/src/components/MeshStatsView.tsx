@@ -15,7 +15,6 @@ import {
   ComposedChart,
 } from 'recharts';
 import SectionTitle from './SectionTitle';
-import PackageDownloadsDonut from './PackageDownloadsDonut';
 import {
   PackageData,
   MeshStatsViewProps as OriginalMeshStatsViewProps,
@@ -748,53 +747,6 @@ const MeshStatsView: FC<MeshStatsViewProps> = ({
     });
   }, [repositoriesData, web3SdkRepositoriesData]);
 
-  // Per-package monthly downloads — full timeline
-  const historicalPackageDownloads = useMemo(() => {
-    if (!meshPackagesData?.packages) return [];
-
-    const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const combined: { [key: string]: any } = {};
-
-    // Process each package's monthly downloads across all years
-    meshPackagesData.packages.forEach(pkg => {
-      pkg.monthly_downloads
-        ?.filter(item => isCompletedMonth(item.year, item.month))
-        ?.forEach(item => {
-          const key = `${item.year}-${String(item.month).padStart(2, '0')}`;
-          const label = `${shortMonths[item.month - 1]} ${item.year}`;
-          if (!combined[key]) combined[key] = { month: label, _sortKey: key };
-          const packageKey = pkg.name.replace('@meshsdk/', '').replace('-', '_');
-          combined[key][packageKey] = item.downloads || 0;
-        });
-    });
-
-    // Sort chronologically and strip sort key
-    return Object.values(combined)
-      .sort((a: any, b: any) => a._sortKey.localeCompare(b._sortKey))
-      .map(({ _sortKey, ...rest }: any) => rest);
-  }, [meshPackagesData, currentYear, currentMonth]);
-
-  // State to control highlighted package in historical downloads chart
-  const [highlightedPackageKey, setHighlightedPackageKey] = React.useState<string | null>(null);
-
-  // Badge options derived from the lines config used in the historical chart
-  const historicalLines = [
-    { name: 'Core', dataKey: 'core', stroke: 'rgba(255, 255, 255, 1)' },
-    { name: 'Core CST', dataKey: 'core_cst', stroke: 'rgba(255, 255, 255, 1)' },
-    { name: 'Common', dataKey: 'common', stroke: 'rgba(255, 255, 255, 1)' },
-    { name: 'Transaction', dataKey: 'transaction', stroke: 'rgba(255, 255, 255, 1)' },
-    { name: 'Wallet', dataKey: 'wallet', stroke: 'rgba(255, 255, 255, 1)' },
-    { name: 'React', dataKey: 'react', stroke: 'rgba(255, 255, 255, 1)' },
-    { name: 'Provider', dataKey: 'provider', stroke: 'rgba(255, 255, 255, 1)' },
-    { name: 'Web3 SDK', dataKey: 'web3_sdk', stroke: 'rgba(255, 255, 255, 1)' },
-    { name: 'Core CSL', dataKey: 'core_csl', stroke: 'rgba(255, 255, 255, 1)' },
-    { name: 'Contract', dataKey: 'contract', stroke: 'rgba(255, 255, 255, 1)' },
-  ];
-
-  const handleToggleBadge = (key: string | null) => {
-    setHighlightedPackageKey(prev => (prev === key ? null : key));
-  };
-
   // Generate monthly contribution data from timestamp arrays — full timeline
   const contributionsData = useMemo(() => {
     if (!contributorStats?.contributors) return [];
@@ -1007,10 +959,10 @@ const MeshStatsView: FC<MeshStatsViewProps> = ({
       {packageData.length > 0 && (
         <>
           <div className={styles.chartsContainer}>
-            {!chartsReady && (
+            {!chartsReady && monthlyData.length > 0 && (
               <div className={styles.chartsGrid}>
                 <div className={styles.chartSection}>
-                  <h2>Package Downloads (All Time)</h2>
+                  <h2>Monthly Downloads</h2>
                   <div
                     className={styles.chart}
                     style={{
@@ -1025,85 +977,21 @@ const MeshStatsView: FC<MeshStatsViewProps> = ({
                     </div>
                   </div>
                 </div>
-                {monthlyData.length > 0 && (
-                  <div className={styles.chartSection}>
-                    <h2>Monthly Downloads</h2>
-                    <div
-                      className={styles.chart}
-                      style={{
-                        height: '520px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <div style={{ color: 'rgba(0, 0, 0, 0.6)', fontSize: '14px' }}>
-                        Loading chart...
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
-            {chartsReady && (
+            {chartsReady && monthlyData.length > 0 && (
               <div className={styles.chartsGrid}>
                 <div className={styles.chartSection}>
-                  <h2>Package Downloads (All Time)</h2>
+                  <h2>Monthly Downloads</h2>
                   <div className={styles.chart} style={{ height: '520px' }}>
-                    <PackageDownloadsDonut packageData={packageData} />
+                    <CustomBarChart data={monthlyData} chartId="monthly" isWhiteBackground={true} />
                   </div>
                 </div>
-
-                {monthlyData.length > 0 && (
-                  <div className={styles.chartSection}>
-                    <h2>Monthly Downloads</h2>
-                    <div className={styles.chart} style={{ height: '520px' }}>
-                      <CustomBarChart data={monthlyData} chartId="monthly" isWhiteBackground={true} />
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
 
-          {/* Historical Package Downloads Chart */}
-          {historicalPackageDownloads.length > 0 && (
-            <div className={styles.chartsContainer}>
-              <div className={styles.chartSection}>
-                <h2>Package Downloads per Month</h2>
-                <div className={styles.badges}>
-                  <button
-                    type="button"
-                    className={`${styles.badge} ${!highlightedPackageKey ? styles.badgeSelected : ''}`}
-                    onClick={() => handleToggleBadge(null)}
-                  >
-                    All
-                  </button>
-                  {historicalLines.map(line => (
-                    <button
-                      key={line.dataKey}
-                      type="button"
-                      className={`${styles.badge} ${highlightedPackageKey === line.dataKey ? styles.badgeSelected : ''}`}
-                      onClick={() => handleToggleBadge(line.dataKey)}
-                      title={line.name}
-                    >
-                      {line.name}
-                    </button>
-                  ))}
-                </div>
-                <div className={styles.chart} style={{ height: '520px' }}>
-                  <CustomMultiLineChart
-                    data={historicalPackageDownloads}
-                    chartId="historical-downloads"
-                    lines={historicalLines}
-                    highlightedKey={highlightedPackageKey}
-                    isWhiteBackground={true}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
         </>
       )}
 

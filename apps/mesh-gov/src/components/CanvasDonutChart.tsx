@@ -28,6 +28,7 @@ interface CanvasDonutChartProps {
   styles: Record<string, string>;
   title?: string;
   showStrokes?: boolean;
+  segmentGap?: number;
   children?: React.ReactNode;
   onActiveSegmentChange?: (key: string | null) => void;
 }
@@ -38,6 +39,7 @@ const CanvasDonutChart: React.FC<CanvasDonutChartProps> = ({
   styles,
   title,
   showStrokes = false,
+  segmentGap = 0,
   children,
   onActiveSegmentChange,
 }) => {
@@ -53,17 +55,24 @@ const CanvasDonutChart: React.FC<CanvasDonutChartProps> = ({
     onActiveSegmentChange?.(activeSegment);
   }, [activeSegment, onActiveSegmentChange]);
 
+  const gapRad = (segmentGap * Math.PI) / 180;
+
   const computedSegments = useMemo(() => {
     if (total === 0) return [];
+    const halfGap = gapRad / 2;
     let startAngle = -Math.PI / 2;
     return segments.map(seg => {
       const segmentAngle = (seg.value / total) * (Math.PI * 2);
       const endAngle = startAngle + segmentAngle;
-      const result = { key: seg.key, startAngle, endAngle };
+      const result = {
+        key: seg.key,
+        startAngle: startAngle + halfGap,
+        endAngle: endAngle - halfGap,
+      };
       startAngle = endAngle;
       return result;
     });
-  }, [segments, total]);
+  }, [segments, total, gapRad]);
 
   const drawChart = useCallback(
     (hoveredKey: string | null) => {
@@ -85,23 +94,32 @@ const CanvasDonutChart: React.FC<CanvasDonutChartProps> = ({
       const radius = Math.min(centerX, centerY) * 0.8;
       const innerRadius = radius * 0.6;
 
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
-      ctx.shadowBlur = 8;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 2;
+      const hasGap = segmentGap > 0;
 
       computedSegments.forEach((seg, index) => {
         const segData = segments[index];
 
         ctx.save();
 
+        if (hasGap) {
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+          ctx.shadowBlur = 10;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 2;
+        } else {
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+          ctx.shadowBlur = 8;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 2;
+        }
+
         if (seg.key === hoveredKey) {
           const scale = 1.03;
           ctx.translate(centerX, centerY);
           ctx.scale(scale, scale);
           ctx.translate(-centerX, -centerY);
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
-          ctx.shadowBlur = 12;
+          ctx.shadowColor = hasGap ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.15)';
+          ctx.shadowBlur = hasGap ? 14 : 12;
           ctx.shadowOffsetX = 1;
           ctx.shadowOffsetY = 3;
         }
@@ -151,7 +169,7 @@ const CanvasDonutChart: React.FC<CanvasDonutChartProps> = ({
         ctx.restore();
       });
     },
-    [segments, computedSegments, total, showStrokes]
+    [segments, computedSegments, total, showStrokes, segmentGap]
   );
 
   useEffect(() => {
